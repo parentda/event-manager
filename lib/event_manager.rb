@@ -8,12 +8,32 @@ end
 
 def clean_homephone(homephone)
   parsed_homephone = homephone.gsub(/[^0-9]/, '')
-  if parsed_homephone.length < 10 ||
+  if !parsed_homephone.length.eql?(10, 11) ||
        (parsed_homephone.length == 11 && parsed_homephone[0] != '1')
     'Invalid Phone Number'
   else
     parsed_homephone[-10..-1]
   end
+end
+
+def parse_date(date)
+  Time.strptime(date, '%D %k:%M')
+end
+
+def time_targeting(parsed_csv, col_name)
+  parsed_csv
+    .map { |row| parse_date(row[col_name]).hour }
+    .tally
+    .sort_by { |hour, _count| hour }
+    .to_h
+end
+
+def day_of_week_targeting(parsed_csv, col_name)
+  parsed_csv
+    .map { |row| parse_date(row[col_name]).wday }
+    .tally
+    .sort_by { |day, _count| day }
+    .to_h
 end
 
 def legislators_by_zipcode(zip)
@@ -58,4 +78,8 @@ erb_template = ERB.new template_letter
 #   save_thank_you_letter(id, form_letter)
 # end
 
-contents.each { |row| puts clean_homephone(row[:homephone]) }
+# contents.each { |row| puts parse_date(row[:regdate]).hour }
+
+puts day_of_week_targeting(contents, :regdate)
+contents.rewind
+puts time_targeting(contents, :regdate)
